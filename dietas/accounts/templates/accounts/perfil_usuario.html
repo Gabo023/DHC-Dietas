@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- [Head] start -->
+
+<head>
+    <title>Iniciar Sesión</title>
+    <!-- [Meta] -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Mantis is made using Bootstrap 5 design framework. Download the free admin template & use it for your project.">
+    <meta name="keywords" content="Mantis, Dashboard UI Kit, Bootstrap 5, Admin Template, Admin Dashboard, CRM, CMS, Bootstrap Admin Template">
+    <meta name="author" content="CodedThemes">
+    {% load static %}
+    <!-- [Favicon] icon -->
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">
+    <!-- [Tabler Icons] https://tablericons.com -->
+    <link rel="stylesheet" href="{% static '/assets_login/fonts/tabler-icons.min.css' %}" >
+    <!-- [Feather Icons] https://feathericons.com -->
+    <link rel="stylesheet" href="{% static '/assets_login/fonts/feather.css' %}" >
+    <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
+    <link rel="stylesheet" href="{% static '/assets_login/fonts/fontawesome.css' %}" >
+    <!-- [Material Icons] https://fonts.google.com/icons -->
+    <link rel="stylesheet" href="{% static '/assets_login/fonts/material.css' %}" >
+    <!-- [Template CSS Files] -->
+    <link rel="stylesheet" href="{% static '/assets_login/css/style.css' %}" id="main-style-link" >
+    <link rel="stylesheet" href="{% static '/assets_login/css/style-preset.css' %}" >
+
+</head>
+
+<body>
+
+    <style type="text/css">
+        /*
+        --------------------------------------------------
+        Estilos para la página de perfil
+        --------------------------------------------------
+        */
+      
+        /* Contenedor principal */
+        .profile-container {
+          margin-top: 3rem !important; /* Sobreescribir el mt-5 de Bootstrap si es necesario */
+        }
+      
+        /* Tarjeta de perfil */
+        .profile-card {
+          border: 1px solid #e0e0e0;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          border-radius: 0.25rem;
+        }
+      
+        /* Encabezado de la tarjeta */
+        .profile-card-header {
+          background-color:rgb(251, 253, 255) !important; /* Mantener el azul primario de Bootstrap */
+          color: white !important;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+          border-radius: 0.25rem 0.25rem 0 0;
+        }
+      
+        .profile-card-header h2 {
+          margin-bottom: 0 !important; /* Asegurar que no haya margen inferior en el h2 */
+          font-size: 1.5rem;
+        }
+      
+        /* Cuerpo de la tarjeta */
+        .profile-card-body {
+          padding: 1.5rem;
+        }
+      
+        /* Estilos para las etiquetas */
+        .profile-label {
+          font-weight: bold;
+          color: #495057;
+          margin-bottom: 0.25rem;
+          display: block;
+        }
+      
+        /* Estilos para los valores */
+        .profile-value {
+          margin-bottom: 1rem;
+          color: #212529;
+        }
+      
+        /* Estilos específicos para los valores como texto plano (readonly inputs) */
+        .profile-value.form-control-plaintext {
+          padding: 0.375rem 0;
+          background-color: transparent;
+          border: solid transparent;
+          border-bottom-width: 1px;
+          border-bottom-color: #ced4da;
+          border-radius: 0;
+        }
+      
+        /* Contenedor de las acciones (botones) */
+        .profile-actions {
+          margin-top: 2rem;
+        }
+      
+        .profile-actions .btn {
+          margin-right: 0.5rem;
+        }
+      
+        /*
+        --------------------------------------------------
+        Estilos específicos para los botones (opcional)
+        --------------------------------------------------
+        */
+      
+        /* Botón de Cambiar Contraseña */
+        .profile-actions .btn-warning {
+          color: #212529;
+          background-color: #007bff; /* Amarillo de advertencia de Bootstrap */
+          border-color: #007bff;
+        }
+      
+        .profile-actions .btn-warning:hover {
+          background-color: #e0a800;
+          border-color: #d39e00;
+        }
+      
+        /* Botón de Volver al Dashboard */
+        .profile-actions .btn-secondary {
+          color: #fff;
+          background-color: #6c757d; /* Gris secundario de Bootstrap */
+          border-color: #6c757d;
+        }
+      
+        .profile-actions .btn-secondary:hover {
+          background-color: #545b62;
+          border-color: #4e555b;
+        }
+      </style>
+      
+      {% load i18n %}
+      <div class="container mt-5 profile-container">
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="card profile-card">
+              <div class="card-header bg-primary text-white profile-card-header">
+                <h2 class="mb-0">{% translate "Información del Perfil" %}</h2>
+              </div>
+              <div class="card-body profile-card-body">
+                <div class="mb-3">
+                  <label for="username" class="form-label profile-label">{% translate "Nombre de Usuario" %}:</label>
+                  <input type="text" class="form-control-plaintext profile-value" id="username" value="{{ request.user.username }}" readonly>
+                </div>
+      
+                <div class="mb-3">
+                  <label for="firstName" class="form-label profile-label">{% translate "Nombres" %}:</label>
+                  <input type="text" class="form-control-plaintext profile-value" id="firstName" value="{{ request.user.first_name }}" readonly>
+                </div>
+      
+                <div class="mb-3">
+                  <label for="lastName" class="form-label profile-label">{% translate "Apellidos" %}:</label>
+                  <input type="text" class="form-control-plaintext profile-value" id="lastName" value="{{ request.user.last_name }}" readonly>
+                </div>
+      
+                <div class="mb-3">
+                  <label for="email" class="form-label profile-label">{% translate "Correo Electrónico" %}:</label>
+                  <input type="email" class="form-control-plaintext profile-value" id="email" value="{{ request.user.email }}" readonly>
+                </div>
+      
+                {% if profile %}
+                <div class="mb-3">
+                  <label for="some_profile_field" class="form-label profile-label">{% translate "Algún Campo del Perfil" %}:</label>
+                  <input type="text" class="form-control-plaintext profile-value" id="some_profile_field" value="{{ profile.some_field }}" readonly>
+                </div>
+                {% endif %}
+      
+                <div class="mt-4 profile-actions">
+                  <a href="{% url 'cambiar_clave' %}" class="btn btn-warning">{% translate "Cambiar Contraseña" %}</a>
+                  <a href="{% url 'dashboard' %}" class="btn btn-secondary">{% translate "Volver al Dashboard" %}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+</body>
+    <!-- [ Main Content ] end -->
+    <!-- Required Js -->
+    <script src="{% static '/assets_login/js/plugins/popper.min.js' %}"></script>
+    <script src="{% static '/assets_login/js/plugins/simplebar.min.js' %}"></script>
+    <script src="{% static '/assets_login/js/plugins/bootstrap.min.js' %}"></script>
+    <script src="{% static '/assets_login/js/fonts/custom-font.js' %}"></script>
+    <script src="{% static '/assets_login/js/pcoded.js' %}"></script>
+    <script src="{% static '/assets_login/js/plugins/feather.min.js' %}"></script> 
+    
+    <script>layout_change('light');</script>

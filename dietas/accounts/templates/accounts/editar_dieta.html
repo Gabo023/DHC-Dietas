@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- [Head] start -->
+
+<head>
+  <title>Sistema de dietas</title>
+  <!-- [Meta] -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Mantis is made using Bootstrap 5 design framework. Download the free admin template & use it for your project.">
+  <meta name="keywords" content="Mantis, Dashboard UI Kit, Bootstrap 5, Admin Template, Admin Dashboard, CRM, CMS, Bootstrap Admin Template">
+  <meta name="author" content="CodedThemes">
+  {% load static %}
+  <!-- [Favicon] icon -->
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">
+<!-- [Tabler Icons] https://tablericons.com -->
+{% load static %}
+<link rel="stylesheet" href="{% static '/assets_bashboard/fonts/tabler-icons.min.css' %}" >
+<!-- [Feather Icons] https://feathericons.com -->
+{% load static %}
+<link rel="stylesheet" href="{% static '/assets_bashboard/fonts/feather.css' %}" >
+<!-- [Font Awesome Icons] https://fontawesome.com/icons -->
+{% load static %}
+<link rel="stylesheet" href="{% static '/assets_bashboard/fonts/fontawesome.css' %}" >
+<!-- [Material Icons] https://fonts.google.com/icons -->
+{% load static %}
+<link rel="stylesheet" href="{% static '/assets_bashboard/fonts/material.css' %}" >
+<!-- [Template CSS Files] -->
+{% load static %}
+<link rel="stylesheet" href="{% static '/assets_bashboard/css/style.css' %}" id="main-style-link" >
+{% load static %}
+<link rel="stylesheet" href="{% static '/assets_bashboard/css/style-preset.css' %}" >
+
+</head>
+
+<body data-pc-preset="preset-1" data-pc-direction="ltr" data-pc-theme="light">
+    <!-- [ Pre-loader ] start -->
+  <div class="loader-bg">
+    <div class="loader-track">
+      <div class="loader-fill"></div>
+    </div>
+  </div>
+  <!-- [ Pre-loader ] End -->
+   <!-- [ Sidebar Menu ] start -->
+  <nav class="pc-sidebar">
+    <div class="navbar-wrapper">
+      <div class="navbar-content">
+        <ul class="pc-navbar">
+          <li class="pc-item">
+            <a href="#" class="pc-link">
+              <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+              <span class="pc-mtext">Panel de datos</span>
+            </a>
+          </li>
+  
+          <li class="pc-item pc-caption">
+            <label>Menú</label>
+            <i class="ti ti-dashboard"></i>
+          </li>
+          <li class="pc-item">
+            <a href="{% url 'dashboard' %}" class="pc-link">
+              <span class="pc-mtext">Inicio</span>
+            </a>
+          </li>
+          <li class="pc-item">
+            <a href="{% url 'lista_pacientes' %}" class="pc-link">
+              <span class="pc-mtext">Pacientes</span>
+            </a>
+          </li>
+          <li class="pc-item">
+            <a href="{% url 'lista_dietas' %}" class="pc-link">
+              <span class="pc-mtext">Dieta</span>
+            </a>
+          </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!-- [ Sidebar Menu ] end --> <!-- [ Header Topbar ] start -->
+  <header class="pc-header">
+    <div class="header-wrapper"> <!-- [Mobile Media Block] start -->
+  <div class="me-auto pc-mob-drp">
+    <ul class="list-unstyled">
+      <!-- ======= Menu collapse Icon ===== -->
+      <li class="pc-h-item pc-sidebar-collapse">
+        <a href="#" class="pc-head-link ms-0" id="sidebar-hide">
+          <i class="ti ti-menu-2"></i>
+        </a>
+      </li>
+      <li class="pc-h-item pc-sidebar-popup">
+        <a href="#" class="pc-head-link ms-0" id="mobile-collapse">
+          <i class="ti ti-menu-2"></i>
+        </a>
+      </li>
+      
+    </ul>
+  </div>
+  <!-- [Mobile Media Block end] -->
+  <div class="ms-auto">
+    <ul class="list-unstyled">
+      <li class="dropdown pc-h-item header-user-profile">
+        <a
+          class="pc-head-link dropdown-toggle arrow-none me-0"
+          data-bs-toggle="dropdown"
+          href="#"
+          role="button"
+          aria-haspopup="false"
+          data-bs-auto-close="outside"
+          aria-expanded="false"
+        >
+        {% block content %}
+          <img src="{% static '/assets_bashboard/images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar">
+          <p>Usuario: {{ user.username }}</p>
+        {% endblock %}
+        </a>
+        <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
+          <div class="dropdown-header">
+            <div class="d-flex mb-1">
+              <div class="flex-shrink-0">
+                {% load static %}
+                
+                <img src="{% static '/assets_bashboard/images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar wid-35">
+                <p>Usuario: {{ user.username }}</p>
+                
+              </div>
+              <div class="flex-grow-1 ms-3">
+              </div>
+              <a href="#!" class="pc-head-link bg-transparent"><i class="ti ti-power text-danger"></i></a>
+            </div>
+          </div>
+          <ul class="nav drp-tabs nav-fill nav-tabs" id="mydrpTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="drp-t1"
+                data-bs-toggle="tab"
+                data-bs-target="#drp-tab-1"
+                type="button"
+                role="tab"
+                aria-controls="drp-tab-1"
+                aria-selected="true"
+                ><i class="ti ti-user"></i> Perfil</button
+              >
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="drp-t2"
+                data-bs-toggle="tab"
+                data-bs-target="#drp-tab-2"
+                type="button"
+                role="tab"
+                aria-controls="drp-tab-2"
+                aria-selected="false"
+                ><i class="ti ti-settings"></i> Configuración</button
+              >
+            </li>
+          </ul>
+          <div class="tab-content" id="mysrpTabContent">
+
+            <div class="tab-pane fade" id="drp-tab-1" role="tabpanel" aria-labelledby="drp-t1" tabindex="0">
+              <a href="/accounts/logout/" class="dropdown-item">  
+                <i class="ti ti-power"></i>
+                <span>Cerrar Sesión</span>
+              </a>
+            </div>
+
+            <div class="tab-pane fade show active" id="drp-tab-1" role="tabpanel" aria-labelledby="drp-t1" tabindex="0">
+              <a href="{% url 'perfil_usuario' %}" class="dropdown-item">  
+                <i class="ti ti-power"></i>
+                <span>Perfil</span>
+              </a>
+            </div>
+
+            <div class="tab-pane fade" id="drp-tab-2" role="tabpanel" aria-labelledby="drp-t2" tabindex="0">
+              <a href="{% url 'cambiar_clave' %}" class="dropdown-item">  
+                <i class="ti ti-power"></i>
+                <span>Cambiar Contraseña</span>
+              </a>
+
+            </div>
+
+
+            
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+   </div>
+  </header>
+  <!-- [ Header ] end -->
+  <body>
+  
+  
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+
+        <style type="text/css">
+          .form-container {
+            width: 500px; /* Ajusta el ancho según tus necesidades */
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .form-dieta {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .form-dieta button.btn-submit {
+            margin-bottom: 10px; /* Espacio entre los botones */
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            align-self: flex-start;
+        }
+        
+        .form-dieta button.btn-submit:hover {
+            background-color: #0056b3;
+        }
+        
+        .form-dieta {{ form.as_p }} {
+            margin-bottom: 15px; /* Espacio entre los campos del formulario */
+        }
+        
+        .form-dieta p label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-dieta p input,
+        .form-dieta p select,
+        .form-dieta p textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .table th,
+        .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .table.table-hover tbody tr:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .table.table-borderless th,
+        .table.table-borderless td {
+            border: none;
+        }
+        
+        .table.mb-0 {
+            margin-bottom: 0;
+        }
+
+        .btn-danger {
+          background-color: #dc3545;
+          color: white;
+        }
+
+        .table-actions {
+          display: flex;
+          gap: 10px; /* Espacio entre los enlaces */
+        }
+        
+        .table-actions a {
+          padding: 8px 12px;
+          border-radius: 4px;
+          text-decoration: none;
+          color: white;
+        }
+        
+        .table-actions a:first-child {
+          background-color: #007bff; /* Azul para "Editar" */
+        }
+        
+        .table-actions a:last-child {
+          background-color: #dc3545; /* Rojo para "Eliminar" */
+        }
+        
+        .table-actions a:hover {
+          opacity: 0.8; /* Efecto de opacidad al pasar el ratón */
+        }
+        </style>
+
+        <div class="form-container">
+          <form method="post" class="form-dieta">
+              {% csrf_token %}
+              <h5 class="form-title">Editar Información de la Dieta</h5>
+              <button type="submit" class="btn-submit">Guardar Cambios</button>
+              <div class="form-group">
+                  {{ form.nombre_dieta.label_tag }}
+                  {{ form.nombre_dieta }}
+                  {% if form.nombre_dieta.errors %}
+                      <div class="form-errors">
+                          {{ form.nombre_dieta.errors }}
+                      </div>
+                  {% endif %}
+              </div>
+      
+              <div class="form-group">
+                  {{ form.fecha_inicio.label_tag }}
+                  {{ form.fecha_inicio }}
+                  {% if form.fecha_inicio.errors %}
+                      <div class="form-errors">
+                          {{ form.fecha_inicio.errors }}
+                      </div>
+                  {% endif %}
+              </div>
+      
+              <div class="form-group">
+                  {{ form.fecha_fin.label_tag }}
+                  {{ form.fecha_fin }}
+                  {% if form.fecha_fin.errors %}
+                      <div class="form-errors">
+                          {{ form.fecha_fin.errors }}
+                      </div>
+                  {% endif %}
+              </div>
+      
+              <div class="form-group">
+                  {{ form.paciente.label_tag }}
+                  {{ form.paciente }}
+                  {% if form.paciente.errors %}
+                      <div class="form-errors">
+                          {{ form.paciente.errors }}
+                      </div>
+                  {% endif %}
+              </div>
+      
+              <div class="form-group">
+                  <label for="{{ form.npo.id_for_label }}">¿Paciente en NPO?:</label>
+                  {{ form.npo }}
+                  {% if form.npo.errors %}
+                      <div class="form-errors">
+                          {{ form.npo.errors }}
+                      </div>
+                  {% endif %}
+              </div>
+      
+              <div class="form-group">
+                  {{ form.acompanante.label_tag }}
+                  {{ form.acompanante }}
+                  {% if form.acompanante.errors %}
+                      <div class="form-errors">
+                          {{ form.acompanante.errors }}
+                      </div>
+                  {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.indicaciones.id_for_label }}">Indicaciones:</label>
+                {{ form.indicaciones }}
+                {% if form.indicaciones.errors %}
+                    <div class="form-errors">
+                        {{ form.indicaciones.errors }}
+                    </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.restricciones.id_for_label }}">Restricciones:</label>
+                {{ form.restricciones }}
+                {% if form.restricciones.errors %}
+                    <div class="form-errors">
+                        {{ form.restricciones.errors }}
+                    </div>
+                {% endif %}
+              </div>
+
+
+              <div class="table-actions">
+                <a href="{% url 'detalle_dieta' dieta_id=dieta.id %}" class="btn-submit">Agregar Detalles</a>
+              </div>  
+          </form>
+      </div>
+      
+      <div>
+          <h5>Detalles de Dieta</h5>
+          <table class="table table-hover table-borderless mb-0">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Medidas</th>
+                    <th>Cantidad</th>
+                    <th>Periodos</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in detalles_dieta %}
+                    <tr>
+                        <td>{{ detalle.tipo_dieta }}</td>
+                        <td>{{ detalle.descripcion_dieta }}</td>
+                        <td>{{ detalle.medidas }}</td>
+                        <td>{{ detalle.medidas_cantidad }}</td>
+                        <td>{{ detalle.periodos }}</td>
+                        <td>
+                          <div class="table-actions">
+                              <a href="{% url 'editar_detalle_dieta' detalle_id=detalle.id %}">Editar</a>
+                              <a href="{% url 'eliminar_detalle_dieta' detalle_id=detalle.id %}">Eliminar</a>
+                          </div>
+                      </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      </div>
+    </div>
+  
+    <!-- [Page Specific JS] start -->
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/plugins/apexcharts.min.js' %}"></script>
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/pages/dashboard-default.js' %}"></script>
+    <!-- [Page Specific JS] end -->
+    <!-- Required Js -->
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/plugins/popper.min.js' %}"></script>
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/plugins/simplebar.min.js' %}"></script>
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/plugins/bootstrap.min.js' %}"></script>
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/fonts/custom-font.js' %}"></script>
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/pcoded.js' %}"></script>
+    {% load static %}
+    <script src="{% static '/assets_bashboard/js/plugins/feather.min.js' %}"></script>
+
+  
+    <script>layout_change('light');</script>
+    
+    <script>change_box_container('false');</script>
+     
+    <script>layout_rtl_change('false');</script> 
+    
+    <script>preset_change("preset-1");</script>
+     
+    <script>font_change("Public-Sans");</script>   
+  
+  </body>
+  <!-- [Body] end -->
+  
+  </html>
