@@ -269,7 +269,79 @@
               <button type="submit" name="agregar_detalle" class="btn-submit">Guardar</button>
               <h5 class="form-title">Detalle de la Dieta</h5>
               
-              {{ form_detalle.as_p }}
+              <div class="form-group">
+                {{ form_detalle.tipo_dieta.label_tag }}
+                {{ form_detalle.tipo_dieta }}
+                {% if form_detalle.tipo_dieta.errors %}
+                    <div class="error">{{ form_detalle.tipo_dieta.errors }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group" id="descripcion_dieta_div">
+                {{ form_detalle.descripcion_dieta.label_tag }}
+                {{ form_detalle.descripcion_dieta }}
+                {% if form_detalle.descripcion_dieta.errors %}
+                    <div class="error">{{ form_detalle.descripcion_dieta.errors }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group" id="descripcion_biberon_div">
+                {{ form_detalle.descripcion_biberon.label_tag }}
+                {{ form_detalle.descripcion_biberon }}
+                {% if form_detalle.descripcion_biberon.errors %}
+                    <div class="error">{{ form_detalle.descripcion_biberon.errors }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group">
+                <label for="{{ form_detalle.fecha_det_dieta.id_for_label }}">Fecha de la dieta</label>
+                {{ form_detalle.fecha_det_dieta }}
+                {% if form_detalle.fecha_det_dieta.errors %}
+                    <div class="error">{{ form_detalle.fecha_det_dieta.errors }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group" id="medidas_div">
+                {{ form_detalle.medidas.label_tag }}
+                {{ form_detalle.medidas }}
+                {% if form_detalle.medidas.errors %}
+                    <div class="error">{{ form_detalle.medidas.errors }}</div>
+                {% endif %}
+            </div>
+    
+            <div class="form-group" id="medidas_cantidad_div">
+                {{ form_detalle.medidas_cantidad.label_tag }}
+                {{ form_detalle.medidas_cantidad }}
+                {% if form_detalle.medidas_cantidad.errors %}
+                    <div class="error">{{ form_detalle.medidas_cantidad.errors }}</div>
+                {% endif %}
+            </div>
+
+              <div id="periodos_div">
+                {{ form_detalle.periodos.label_tag }}
+                {{ form_detalle.periodos }}
+                {% if form_detalle.periodos.errors %}
+                    <div class="error">{{ form_detalle.periodos.errors }}</div>
+                {% endif %}
+            </div>
+    
+            <div id="frecuencia_div">
+                {{ form_detalle.frecuencia.label_tag }}
+                {{ form_detalle.frecuencia }}
+                {% if form_detalle.frecuencia.errors %}
+                    <div class="error">{{ form_detalle.frecuencia.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group" id="indicaciones_div">
+              {{ form_detalle.indicaciones.label_tag }}
+              {{ form_detalle.indicaciones }}
+              {% if form_detalle.indicaciones.errors %}
+                  <div class="error">{{ form_detalle.indicaciones.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group" id="restricciones_div">
+              {{ form_detalle.restricciones.label_tag }}
+              {{ form_detalle.restricciones }}
+              {% if form_detalle.restricciones.errors %}
+                  <div class="error">{{ form_detalle.restricciones.errors }}</div>
+              {% endif %}
+            </div>
 
               {# **AQUÍ VA EL CÓDIGO PARA MOSTRAR LOS ERRORES** #}
               {% if field.errors %}
@@ -284,8 +356,23 @@
                 const tipoDietaSelect = document.querySelector('#id_tipo_dieta');
                 const descripcionDietaFieldDiv = document.querySelector('#id_descripcion_dieta').parentNode;
                 const descripcionBiberonFieldDiv = document.querySelector('#id_descripcion_biberon').parentNode;
+
                 const descripcionDietaSelect = document.querySelector('#id_descripcion_dieta');
                 const descripcionBiberonSelect = document.querySelector('#id_descripcion_biberon');
+
+                
+                const periodosDiv = document.querySelector('#id_periodos').parentNode;
+                const frecuenciaDiv = document.querySelector('#id_frecuencia').parentNode;
+                const medidasDiv = document.querySelector('#id_medidas').parentNode;
+                //const medidasFieldDiv = document.querySelector('#id_medidas').parentNode;
+                const medidasCantidadDiv = document.querySelector('#id_medidas_cantidad').parentNode;
+                //const medidasCantidadFieldDiv = document.querySelector('#id_medidas_cantidad').parentNode;
+
+                const periodosSelect = document.querySelector('#id_periodos');
+                //const frecuenciaSelect = document.querySelector('#id_frecuencia');
+                const medidasSelect = document.querySelector('#id_medidas');
+                const medidasCantidadSelect = document.querySelector('#id_medidas_cantidad');
+
                 const ningunoValue = 'Ninguno'; // Asegúrate de que coincida con el valor en tus CHOICES
         
                 function toggleDescripcionFields() {
@@ -293,15 +380,45 @@
                     descripcionBiberonSelect.disabled = true;
                     descripcionDietaSelect.value = ningunoValue; // Establecer en "Ninguno" al cambiar
                     descripcionBiberonSelect.value = ningunoValue; // Establecer en "Ninguno" al cambiar
+                    periodosDiv.hidden = true;
+                    frecuenciaDiv.hidden = true;
+                    medidasDiv.hidden = true;
+                    medidasCantidadDiv.hidden = true;
+                    //medidasSelect.disabled = true;
+                    //medidasCantidadSelect.disabled = true;
+
         
                     if (tipoDietaSelect.value === 'Dieta') {
                         descripcionDietaFieldDiv.style.display = 'block';
-                        descripcionBiberonFieldDiv.style.display = 'none';
+                        periodosDiv.hidden = false;
+                        frecuenciaDiv.hidden = true;
                         descripcionDietaSelect.disabled = false;
+                        periodosSelect.disabled = false;
+
+                        descripcionBiberonFieldDiv.style.display = 'none';
+
+                        //medidasFieldDiv.style.display = 'none';
+
+                        //medidasCantidadFieldDiv.style.display = 'none';
+
                     } else if (tipoDietaSelect.value === 'Biberones') {
                         descripcionDietaFieldDiv.style.display = 'none';
+
                         descripcionBiberonFieldDiv.style.display = 'block';
                         descripcionBiberonSelect.disabled = false;
+
+                        //medidasFieldDiv.style.display = 'block';
+                        //medidasSelect.disabled = false;
+
+                        //medidasCantidadFieldDiv.style.display = 'block';
+                        //medidasCantidadSelect.disabled = false;
+
+                        medidasDiv.hidden = false;
+                        medidasCantidadDiv.hidden = false;
+
+                        periodosDiv.hidden = true;
+                        frecuenciaDiv.hidden = false;
+
                     } else {
                         descripcionDietaFieldDiv.style.display = 'none';
                         descripcionBiberonFieldDiv.style.display = 'none';
@@ -314,7 +431,7 @@
                 // Llamar a la función cada vez que cambie la selección de tipo_dieta
                 tipoDietaSelect.addEventListener('change', toggleDescripcionFields);
             });
-        </script>
+        </script> 
 
           <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
       </div>

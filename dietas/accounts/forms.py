@@ -3,6 +3,7 @@ from .models import DatosPersonales, Dieta, DetalleDieta
 from django.forms import formset_factory
 from django.forms.models import formset_factory
 from django.contrib.auth.forms import PasswordChangeForm
+from datetime import date
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=150, label="Nombre de usuario")
@@ -19,6 +20,7 @@ class DatosPersonalesForm(forms.ModelForm):
         fields = ['tipo_doc', 'num_identificacion', 'nombres', 'apellidos', 'fecha_nac', 'observaciones', 'cama', 'cuarentena', 'activa']
 
     fecha_nac = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}))
+    
 
     def clean_num_identificacion(self):
         num_identificacion = self.cleaned_data.get("num_identificacion")
@@ -55,7 +57,7 @@ class DatosPersonalesForm(forms.ModelForm):
 class DietaForm(forms.ModelForm):
     class Meta:
         model = Dieta
-        fields = ['paciente', 'acompanante', 'npo', 'indicaciones', 'restricciones']
+        fields = ['paciente', 'acompanante', 'npo']
 
     def clean(self):
         cleaned_data = super().clean()
@@ -71,6 +73,7 @@ PERIODOS_CHOICES = [
     ('A', 'A'),
     ('CV', 'CV'),
     ('M', 'M'),
+    ('CN', 'CN'),
     ('TODOS', 'TODOS')
 ]
 
@@ -107,45 +110,52 @@ class DetalleDietaForm(forms.ModelForm):
         choices=PERIODOS_CHOICES,
         widget=forms.CheckboxSelectMultiple,
         required=False,
-        label="Períodos"  # Puedes personalizar la etiqueta
+        label="Períodos"
     )
 
     frecuencia = forms.MultipleChoiceField(
         choices=FRECUENCIA_CHOICES,
         widget=forms.CheckboxSelectMultiple,
         required=False,
-        label="Frecuencia"  # Puedes personalizar la etiqueta
+        label="Frecuencia"
+    )
+
+    fecha_det_dieta = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        initial=date.today
     )
 
     class Meta:
         model = DetalleDieta
-        fields = ['tipo_dieta', 'descripcion_dieta', 'descripcion_biberon', 'medidas', 
-                  'medidas_cantidad', 'periodos', 'frecuencia']
-    
+        fields = [
+            'tipo_dieta', 'descripcion_dieta', 'descripcion_biberon',
+            'fecha_det_dieta', 'medidas', 'medidas_cantidad',
+            'periodos', 'frecuencia', 'indicaciones', 'restricciones'
+        ]
+
     def __init__(self, *args, **kwargs):
         super(DetalleDietaForm, self).__init__(*args, **kwargs)
-        # Establece SIEMPRE los widgets Select con las opciones correspondientes
         self.fields['descripcion_dieta'].widget = forms.Select(choices=DetalleDieta.DIETA_CHOICES)
         self.fields['descripcion_biberon'].widget = forms.Select(choices=DetalleDieta.BIBERON_CHOICES)
-        
+
     def clean(self):
         cleaned_data = super().clean()
         tipo_dieta = cleaned_data.get('tipo_dieta')
         descripcion_dieta = cleaned_data.get('descripcion_dieta')
         descripcion_biberon = cleaned_data.get('descripcion_biberon')
 
-        if tipo_dieta == 'Dieta' and not descripcion_dieta:
-            self.add_error('descripcion_dieta', 'Este campo es requerido para el tipo de dieta seleccionado.')
-        elif tipo_dieta == 'Biberones' and not descripcion_biberon:
-            self.add_error('descripcion_biberon', 'Este campo es requerido para el tipo de biberón seleccionado.')
+        if tipo_dieta == 'Dieta':
+            cleaned_data['descripcion_biberon'] = 'Ninguno'  # Asegurar que el campo no usado esté en "Ninguno"
+            if not descripcion_dieta or descripcion_dieta == 'Ninguno':
+                self.add_error('descripcion_dieta', 'Este campo es requerido para el tipo de dieta seleccionado.')
+        elif tipo_dieta == 'Biberones':
+            cleaned_data['descripcion_dieta'] = 'Ninguno'  # Asegurar que el campo no usado esté en "Ninguno"
+            if not descripcion_biberon or descripcion_biberon == 'Ninguno':
+                self.add_error('descripcion_biberon', 'Este campo es requerido para el tipo de biberón seleccionado.')
         elif tipo_dieta == 'Ninguno':
-            pass
-        elif tipo_dieta == 'Dieta' and descripcion_biberon and descripcion_biberon != 'Ninguno':
-            self.add_error('descripcion_biberon', 'Este campo debe estar en "Ninguno" para el tipo de dieta seleccionado.')
-        elif tipo_dieta == 'Biberones' and descripcion_dieta and descripcion_dieta != 'Ninguno':
-            self.add_error('descripcion_dieta', 'Este campo debe estar en "Ninguno" para el tipo de biberón seleccionado.')
+            cleaned_data['descripcion_dieta'] = 'Ninguno'
+            cleaned_data['descripcion_biberon'] = 'Ninguno'
 
-        # No es necesario manipular 'periodos' aquí, Django lo hará automáticamente
         return cleaned_data
-      
+
 DietaDetalleFormSet = formset_factory(DetalleDietaForm, extra=1)

@@ -47,7 +47,7 @@ class DatosPersonales(models.Model):
     cama = models.CharField(max_length=10, choices=CAMA_CHOICES, blank=True, null=True)
     cuarentena = models.CharField(max_length=30, choices=CUARENTENA_CHOICES, blank=True, null=True)
     activa = models.BooleanField(default=True)
-    fecha_actual = models.DateField(auto_now_add=True)
+    fecha_actual = models.DateField(auto_now_add=False)
 
     def __str__(self):
         return f"{self.nombres} {self.apellidos} - {self.num_identificacion}"
@@ -73,8 +73,6 @@ class Dieta(models.Model):
     paciente = models.ForeignKey(DatosPersonales, on_delete=models.CASCADE)
     acompanante = models.CharField(max_length=100, blank=True, null=True)
     npo = models.BooleanField(default=False)
-    indicaciones = models.CharField(max_length=100, blank=False, null=True)
-    restricciones = models.CharField(max_length=100, blank=False, null=True)
 
     def save(self, *args, **kwargs):
         if not self.paciente.cama:
@@ -137,15 +135,26 @@ class DetalleDieta(models.Model):
         ('Onzas', 'Onzas')
     ]
 
+    PERIODOS_CHOICES = [
+    ('D', 'D'),
+    ('CM', 'CM'),
+    ('A', 'A'),
+    ('CV', 'CV'),
+    ('M', 'M'),
+    ('CN', 'CN')
+    ]
+
     dieta = models.ForeignKey(Dieta, on_delete=models.CASCADE, related_name="detalles")
-    tipo_dieta = models.CharField(max_length=10, choices=TIPO_DIETA_CHOICES)
-    descripcion_biberon = models.CharField(max_length=100, choices=BIBERON_CHOICES, null=True, blank=True, default='Ninguno')
-    descripcion_dieta = models.CharField(max_length=100, choices=DIETA_CHOICES, null=True, blank=True, default='Ninguno')
-    medidas = models.CharField(max_length=20, choices=MEDIDAS_CHOICES)
-    medidas_cantidad = models.PositiveIntegerField()
-    #periodos = models.CharField(max_length=10, choices=PERIODOS_CHOICES)
+    tipo_dieta = models.CharField(max_length=20, choices=TIPO_DIETA_CHOICES)
+    descripcion_biberon = models.CharField(max_length=100, choices=BIBERON_CHOICES, null=True, blank=True)
+    descripcion_dieta = models.CharField(max_length=100, choices=DIETA_CHOICES, null=True, blank=True)
+    medidas = models.CharField(max_length=20, choices=MEDIDAS_CHOICES, null=True, blank=True)
+    medidas_cantidad = models.PositiveIntegerField(null=True, blank=True)
     periodos = models.CharField(max_length=100, null=True, blank=True)
     frecuencia = models.CharField(max_length=100, null=True, blank=True)
+    fecha_det_dieta = models.DateField(verbose_name='Fecha del Detalle')
+    indicaciones = models.CharField(max_length=100, blank=False, null=True)
+    restricciones = models.CharField(max_length=100, blank=False, null=True)
 
     def save(self, *args, **kwargs):
         if self.tipo_dieta == 'Dieta' and self.descripcion_dieta not in [choice[0] for choice in self.DIETA_CHOICES]:

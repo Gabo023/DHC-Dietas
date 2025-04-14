@@ -241,7 +241,6 @@
             </div>
         </div>
 
-        
         <div class="col-md-12 col-xl-8">
           <h5 class="mb-3">Panel de Control</h5>
           <div class="card tbl-card">
@@ -267,15 +266,41 @@
                     {% endif %}
 
                 </form>
+                {% if reporte_periodos %}
+                    <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% translate "Descripción Dieta" %}</th>
+                                        {% for periodo in periodos_ordenados %}
+                                            <th>{{ periodo }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in reporte_periodos %}
+                                        <tr>
+                                            <td>{{ item.descripcion_dieta }}</td>
+                                            <td>{{ item.D }}</td>
+                                            <td>{{ item.CM }}</td>
+                                            <td>{{ item.A }}</td>
+                                            <td>{{ item.CV }}</td>
+                                            <td>{{ item.M }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="{{ periodos_ordenados|length|add:1 }}" class="text-center">{% translate "No hay datos de dietas para el rango de fechas seleccionado." %}</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                    </div>
+                  {% else %}
+                    <p>{% translate "Por favor, selecciona un rango de fechas para ver el conteo de dietas por período." %}</p>
+                  {% endif %}
+
               </li>
-
-              
-            </div>    
-        </div>
-  
-      
-  
-
+                         
+        </div>    
+      </div>
     </div>
   
     <!-- [Page Specific JS] start -->

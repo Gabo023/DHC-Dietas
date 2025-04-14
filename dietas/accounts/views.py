@@ -20,6 +20,7 @@ from django.utils import timezone
 from datetime import datetime
 from django.db.models import OuterRef, Subquery
 import io
+from django.db.models import F
 
 logger = logging.getLogger(__name__)
 
@@ -69,69 +70,63 @@ def dashboard(request):
     fecha_inicio_str = request.GET.get('fecha_inicio')
     fecha_fin_str = request.GET.get('fecha_fin')
 
-    reporte_frecuencias = []
-    periodos_ordenados = ['AMUERZO', 'COL.PM', 'MERIENDA', 'COL.NOC', 'DESAYUNO', 'COL.AM']
+    detalles = DetalleDieta.objects.none()
+    reporte_periodos = []
+    periodos_ordenados = ['D', 'CM', 'A', 'CV', 'M']
 
     if fecha_inicio_str and fecha_fin_str:
         try:
             fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
             fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
 
-            detalle_dietas = DetalleDieta.objects.filter(
-                dieta__paciente__fecha_actual__range=(fecha_inicio, fecha_fin)
-            ).values('descripcion_dieta', 'frecuencia')
+            # Obtener detalles en rango
+            detalles = DetalleDieta.objects.filter(fecha_det_dieta__range=(fecha_inicio, fecha_fin))
 
-            frecuencia_periodo_map = {
-                'F1': 'COL.AM', 'F2': 'COL.AM', 'F3': 'COL.AM', 'F4': 'COL.AM',
-                'F5': 'DESAYUNO', 'F6': 'DESAYUNO', 'F7': 'DESAYUNO', 'F8': 'DESAYUNO',
-                'F9': 'ALMUERZO', 'F10': 'ALMUERZO', 'F11': 'ALMUERZO', 'F12': 'ALMUERZO',
-                'F13': 'COL.PM', 'F14': 'COL.PM', 'F15': 'COL.PM', 'F16': 'COL.PM',
-                'F17': 'COL.NOC', 'F18': 'COL.NOC', 'F19': 'COL.NOC', 'F20': 'COL.NOC',
-                'F21': 'MERIENDA', 'F22': 'MERIENDA', 'F23': 'MERIENDA', 'F24': 'MERIENDA',
-            }
+            # Obtener datos personales relacionados a esos detalles
+            datos_personales = DatosPersonales.objects.filter(
+                dieta__detalledieta__in=detalles
+            ).values('descripcion_dieta', 'periodos')
 
-            reporte_frecuencias_dict = {}
-            for detalle in detalle_dietas:
+            # Construcción del reporte por periodos
+            reporte_periodos_dict = {}
+            for detalle in datos_personales:
                 descripcion_dieta = detalle['descripcion_dieta']
-                frecuencias_str = detalle['frecuencia']
-                frecuencias_lista = [f.strip().upper() for f in frecuencias_str.split(',')]
+                periodos_str = detalle['periodos']
+                if periodos_str:
+                    periodos_lista = [p.strip().upper() for p in periodos_str.split(',')]
+                    for periodo in periodos_lista:
+                        if periodo in [choice[0] for choice in DetalleDieta.PERIODOS_CHOICES if choice[0] != 'TODOS']:
+                            reporte_periodos_dict.setdefault(descripcion_dieta, {}).setdefault(periodo, 0)
+                            reporte_periodos_dict[descripcion_dieta][periodo] += 1
 
-                for frecuencia in frecuencias_lista:
-                    periodo = frecuencia_periodo_map.get(frecuencia)
-                    if periodo:
-                        reporte_frecuencias_dict.setdefault(descripcion_dieta, {}).setdefault(periodo, 0)
-                        reporte_frecuencias_dict[descripcion_dieta][periodo] += 1
+            # Convertimos a lista para mostrar en el template
+            for descripcion_dieta, periodos_conteo in reporte_periodos_dict.items():
+                reporte_periodos.append({'descripcion_dieta': descripcion_dieta, **periodos_conteo})
 
-            reporte_frecuencias = []
-            for descripcion_dieta, frecuencias in reporte_frecuencias_dict.items():
-                reporte_frecuencias.append({'descripcion_dieta': descripcion_dieta, **frecuencias})
-
-            for item in reporte_frecuencias:
+            # Aseguramos que todos los periodos estén presentes aunque con valor 0
+            for item in reporte_periodos:
                 for periodo in periodos_ordenados:
                     item.setdefault(periodo, 0)
 
         except ValueError:
             messages.error(request, "El formato de las fechas es incorrecto (YYYY-MM-DD).")
+    else:
+        # Si no hay fechas, se toma el día actual por defecto
+        hoy = timezone.localdate()
+        detalles = DetalleDieta.objects.filter(fecha_det_dieta=hoy)
 
-    datos_personales = DatosPersonales.objects.all()
-    dietas = Dieta.objects.all()
+    # Conteo total de pacientes y dietas
+    datos_personales_total = DatosPersonales.objects.all()
+    dietas_total = Dieta.objects.all()
 
-    if fecha_inicio_str and fecha_fin_str:
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
-            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
-            datos_personales = datos_personales.filter(fecha_actual__range=(fecha_inicio, fecha_fin))
-            dietas = dietas.filter(paciente__fecha_actual__range=(fecha_inicio, fecha_fin))
-        except ValueError:
-            pass # El mensaje de error ya se añadió arriba
+    total_pacientes = datos_personales_total.count()
+    total_dietas = dietas_total.count()
 
-    total_pacientes = datos_personales.count()
-    total_dietas = dietas.count()
-
+    # Conteo de camas por tipo
     camas_disponibles = DatosPersonales.CAMA_CHOICES
     conteo_camas = []
     for codigo, nombre in camas_disponibles:
-        conteo = DatosPersonales.objects.filter(cama=codigo).count()
+        conteo = datos_personales_total.filter(cama=codigo).count()
         conteo_camas.append({'codigo': codigo, 'nombre': nombre, 'conteo': conteo})
 
     context = {
@@ -141,7 +136,7 @@ def dashboard(request):
         'total_dietas': total_dietas,
         'camas_disponibles': camas_disponibles,
         'conteo_camas': conteo_camas,
-        'reporte_frecuencias': reporte_frecuencias,
+        'reporte_periodos': reporte_periodos,
         'periodos_ordenados': periodos_ordenados,
     }
     return render(request, 'dashboard.html', context)
@@ -158,27 +153,22 @@ def generar_reporte_excel(request):
     try:
         fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
         fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
-        datos_personales = DatosPersonales.objects.filter(fecha_actual__range=(fecha_inicio, fecha_fin))
     except ValueError:
         messages.error(request, "El formato de las fechas es incorrecto (YYYY-MM-DD).")
         return redirect('dashboard')
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename="reporte_consolidado_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
-
-    writer = pd.ExcelWriter(response, engine='xlsxwriter')
+    # Crear un buffer para escribir el archivo en memoria
+    buffer = io.BytesIO()
+    writer = pd.ExcelWriter(buffer, engine='xlsxwriter')
 
     try:
-        # Crear un buffer para el archivo Excel
-        buffer = io.BytesIO()
-        writer = pd.ExcelWriter(buffer, engine='xlsxwriter')
+        # Hoja 1: Datos personales con información de dieta y detalle
+        detalles = DetalleDieta.objects.filter(fecha_det_dieta__range=(fecha_inicio, fecha_fin))
 
-        # Hoja 1: Datos personales con información de dieta
         data_hoja1 = []
-        for paciente in datos_personales:
-            dieta = Dieta.objects.filter(paciente=paciente).first()
-            detalle = DetalleDieta.objects.filter(dieta=dieta).first() if dieta else None
-
+        for detalle in detalles.select_related('dieta__paciente'):
+            paciente = detalle.dieta.paciente
+            dieta = detalle.dieta
             data_hoja1.append({
                 'Cama': paciente.cama if paciente.cama else '',
                 'Numero de Identificacion': paciente.num_identificacion,
@@ -186,91 +176,121 @@ def generar_reporte_excel(request):
                 'Apellido': paciente.apellidos,
                 'Fecha_Nac': paciente.fecha_nac.strftime('%Y-%m-%d') if paciente.fecha_nac else '',
                 'Acompañante': dieta.acompanante if dieta else '',
-                'Fecha_Actual': paciente.fecha_actual.strftime('%Y-%m-%d') if paciente.fecha_actual else '',
-                'Periodos': detalle.periodos if detalle else '',
-                'Medidas': detalle.medidas if detalle else '',
-                'Cantidad': detalle.medidas_cantidad if detalle else '',
-                'Frecuencia': detalle.frecuencia if detalle else '',
-                'Indicaciones': dieta.indicaciones if dieta else '',
-                'Restricciones': dieta.restricciones if dieta else '',
+                'Fecha_Creacion': paciente.fecha_actual.strftime('%Y-%m-%d') if paciente.fecha_actual else '',
+                'Fecha del Detalle': detalle.fecha_det_dieta.strftime('%Y-%m-%d') if detalle.fecha_det_dieta else '',
+                'Periodos': detalle.periodos,
+                'Medidas': detalle.medidas,
+                'Cantidad': detalle.medidas_cantidad,
+                'Frecuencia': detalle.frecuencia,
             })
+
         df_hoja1 = pd.DataFrame(data_hoja1)
         df_hoja1.to_excel(writer, sheet_name='Datos Pacientes', index=False)
 
         # Hoja 2: Listado de todas las dietas por medidas y cantidad
-        dietas_detalle = DetalleDieta.objects.filter(dieta__paciente__fecha_actual__range=(fecha_inicio, fecha_fin)).values('medidas', 'medidas_cantidad').order_by('medidas')
-        df_hoja2 = pd.DataFrame(list(dietas_detalle))
-        df_hoja2.rename(columns={'medidas': 'Medida', 'medidas_cantidad': 'Cantidad'}, inplace=True)
-        df_hoja2.to_excel(writer, sheet_name='Listado Dietas Medida Cantidad', index=False)
+        #dietas_detalle = detalles.values('medidas', 'medidas_cantidad').order_by('medidas')
+        #df_hoja2 = pd.DataFrame(list(dietas_detalle))
+        #df_hoja2.rename(columns={'medidas': 'Medida', 'medidas_cantidad': 'Cantidad'}, inplace=True)
+        #df_hoja2.to_excel(writer, sheet_name='Listado Dietas Medida Cantidad', index=False)
 
-        # Hoja 3: Lista de dietas con el conteo por pacientes y tipo de dieta
-        subquery_descripcion_dieta = DetalleDieta.objects.filter(dieta=OuterRef('id')).values('descripcion_dieta')[:1]
+        # Hoja 3: Conteo por tipo de dieta
+        #dietas_ids = detalles.values_list('dieta_id', flat=True).distinct()
+        #dietas = Dieta.objects.filter(id__in=dietas_ids).annotate(
+        #    descripcion_dieta=Subquery(
+        #        DetalleDieta.objects.filter(dieta=OuterRef('id')).values('descripcion_dieta')[:1]
+        #    )
+        #).values('descripcion_dieta').annotate(conteo=Count('id'))
 
-        conteo_dietas_con_descripcion = Dieta.objects.filter(paciente__fecha_actual__range=(fecha_inicio, fecha_fin)).annotate(
-            total_dietas=Count('id'),
-            descripcion_dieta=Subquery(subquery_descripcion_dieta)
-        ).values(
-            'descripcion_dieta',
-            'total_dietas'  # Ya estamos anotando el total, no necesitamos 'id' en values
-        ).order_by('paciente__num_identificacion')
+        #df_hoja3 = pd.DataFrame(list(dietas))
+        #df_hoja3.rename(columns={
+        #    'descripcion_dieta': 'Descripcion de dieta',
+        #    'conteo': 'Conteo Dietas'
+        #}, inplace=True)
+        #df_hoja3.to_excel(writer, sheet_name='Conteo Dietas por Tipo', index=False)
 
-        df_hoja3 = pd.DataFrame(list(conteo_dietas_con_descripcion))
-        df_hoja3.rename(columns={
-            'descripcion_dieta': 'Descripcion de dieta',
-            'total_dietas': 'Conteo Dietas'  # Corregí el nombre de la columna
-        }, inplace=True)
-        df_hoja3.to_excel(writer, sheet_name='Conteo Dietas por Paciente', index=False)
+        # Hoja 4: Conteo de biberones por paciente
+        #biberones = detalles.values(
+        #    'dieta__paciente__num_identificacion',
+        #    'dieta__paciente__nombres',
+        #    'dieta__paciente__apellidos',
+        #    'descripcion_biberon'
+        #).annotate(total_biberon=Count('id')).order_by(
+        #    'dieta__paciente__num_identificacion', 'descripcion_biberon'
+        #)
 
-        # Hoja 4: Lista de biberón con el conteo por pacientes
-        conteo_biberon_paciente = DetalleDieta.objects.filter(dieta__paciente__fecha_actual__range=(fecha_inicio, fecha_fin)).values('dieta__paciente__num_identificacion', 'dieta__paciente__nombres', 'dieta__paciente__apellidos', 'descripcion_biberon').annotate(total_biberon=Count('id')).order_by('dieta__paciente__num_identificacion', 'descripcion_biberon')
-        df_hoja4 = pd.DataFrame(list(conteo_biberon_paciente))
-        df_hoja4.rename(columns={'descripcion_biberon': 'Biberon', 'total_biberon': 'Conteo Biberon'}, inplace=True)
-        df_hoja4.to_excel(writer, sheet_name='Conteo Biberon por Paciente', index=False)
+        #df_hoja4 = pd.DataFrame(list(biberones))
+        #df_hoja4.rename(columns={
+        #    'descripcion_biberon': 'Biberon',
+        #    'total_biberon': 'Conteo Biberon',
+        #    'dieta__paciente__num_identificacion': 'Identificación',
+        #    'dieta__paciente__nombres': 'Nombres',
+        #    'dieta__paciente__apellidos': 'Apellidos',
+        #}, inplace=True)
+        #df_hoja4.to_excel(writer, sheet_name='Conteo Biberon por Paciente', index=False)
 
-        # Hoja 5: Conteo de frecuencias por descripción de dieta y periodo
-        detalle_dietas = DetalleDieta.objects.filter(dieta__paciente__fecha_actual__range=(fecha_inicio, fecha_fin)).values('tipo_dieta', 'frecuencia')
+        # Finaliza el archivo y lo devuelve
 
-        frecuencia_periodo_map = {
-            'F1': 'COL.AM', 'F2': 'COL.AM', 'F3': 'COL.AM', 'F4': 'COL.AM',
-            'F5': 'DESAYUNO', 'F6': 'DESAYUNO', 'F7': 'DESAYUNO', 'F8': 'DESAYUNO',
-            'F9': 'ALMUERZO', 'F10': 'ALMUERZO', 'F11': 'ALMUERZO', 'F12': 'ALMUERZO',
-            'F13': 'COL.PM', 'F14': 'COL.PM', 'F15': 'COL.PM', 'F16': 'COL.PM',
-            'F17': 'COL.NOC', 'F18': 'COL.NOC', 'F19': 'COL.NOC', 'F20': 'COL.NOC',
-            'F21': 'MERIENDA', 'F22': 'MERIENDA', 'F23': 'MERIENDA', 'F24': 'MERIENDA',
-        }
+        # Hoja 5: Matriz de descripcion_dieta vs periodos (dividiendo múltiples periodos)
+        detalles_periodo = DetalleDieta.objects.filter(
+            fecha_det_dieta__range=(fecha_inicio, fecha_fin)
+        ).values('descripcion_dieta', 'periodos')
 
-        reporte_frecuencias = {}
-        for detalle in detalle_dietas:
-            tipo_dieta = detalle['tipo_dieta']
-            frecuencias_str = detalle['frecuencia']
-            frecuencias_lista = [f.strip().upper() for f in frecuencias_str.split(',')]
+        # Crear DataFrame
+        df_periodos = pd.DataFrame(list(detalles_periodo))
 
-            for frecuencia in frecuencias_lista:
-                periodo = frecuencia_periodo_map.get(frecuencia)
-                if periodo:
-                    reporte_frecuencias.setdefault(tipo_dieta, {}).setdefault(periodo, 0)
-                    reporte_frecuencias[tipo_dieta][periodo] += 1
+        # Eliminar filas sin datos válidos
+        df_periodos = df_periodos.dropna(subset=['descripcion_dieta', 'periodos'])
 
-        data_hoja5 = []
-        periodos_ordenados = ['AMUERZO', 'COL.PM', 'MERIENDA', 'COL.NOC', 'DESAYUNO', 'COL.AM']
-        for tipo, frecuencias_por_periodo in reporte_frecuencias.items():
-            row = {'Descripcion Dieta': tipo}
-            for periodo in periodos_ordenados:
-                row[periodo] = frecuencias_por_periodo.get(periodo, 0)
-            data_hoja5.append(row)
+        # Expandir filas con múltiples periodos (separados por coma o lista)
+        rows_expandidas = []
 
-        df_hoja5 = pd.DataFrame(data_hoja5).fillna(0)
-        df_hoja5.to_excel(writer, sheet_name='Conteo Frecuencias Dieta', index=False)
+        for _, row in df_periodos.iterrows():
+            descripcion = row['descripcion_dieta']
+            periodos_str = row['periodos']
+            # Asegurar que esté en formato lista
+            if isinstance(periodos_str, str):
+                # Quitar corchetes si vienen como string tipo "['D', 'CM']"
+                periodos_str = periodos_str.replace('[', '').replace(']', '').replace("'", "")
+                periodos_list = [p.strip().upper() for p in periodos_str.split(',')]
+            else:
+                periodos_list = []
+
+            for periodo in periodos_list:
+                rows_expandidas.append({
+                    'descripcion_dieta': descripcion,
+                    'periodo': periodo
+                })
+
+        df_expandido = pd.DataFrame(rows_expandidas)
+
+            # Crear matriz pivot (conteo de descripcion_dieta vs periodo)
+        matriz = pd.pivot_table(
+            df_expandido,
+            index='descripcion_dieta',
+            columns='periodo',
+            aggfunc='size',
+            fill_value=0
+        )
+
+        # Ordenar columnas
+        orden_columnas = ['D', 'CM', 'A', 'CV', 'M', 'CN']
+        for col in orden_columnas:
+            if col not in matriz.columns:
+                matriz[col] = 0
+        matriz = matriz[orden_columnas]
+
+        # Reset index y exportar
+        matriz.reset_index(inplace=True)
+        matriz.to_excel(writer, sheet_name='Matriz Dietas x Periodo', index=False)
 
         writer.close()
+        buffer.seek(0)
 
-        # Crear la respuesta HTTP
-        response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response = HttpResponse(buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="reporte_dietas_{fecha_inicio}_a_{fecha_fin}.xlsx"'
         return response
 
     except Exception as e:
-        # Loguear el error para depuración
         print(f"Error al generar el reporte Excel: {e}")
         return HttpResponse(f"Ocurrió un error al generar el reporte: {e}", status=500)
 
@@ -382,21 +402,26 @@ def eliminar_dieta(request, pk):
 
 @login_required   
 def detalle_dieta(request, dieta_id):
-    dieta = get_object_or_404(Dieta, pk=dieta_id)
+    dieta = get_object_or_404(Dieta, id=dieta_id)
     detalles = DetalleDieta.objects.filter(dieta=dieta)
-    form_detalle = DetalleDietaForm()
 
     if request.method == 'POST':
-        if 'agregar_detalle' in request.POST:
-            form_detalle = DetalleDietaForm(request.POST)
-            if form_detalle.is_valid():
-                detalle = form_detalle.save(commit=False)
-                detalle.dieta = dieta
+        form_detalle = DetalleDietaForm(request.POST)
+        if form_detalle.is_valid():
+            detalle = form_detalle.save(commit=False)
+            detalle.dieta = dieta
+            try:
                 detalle.save()
                 messages.success(request, "Detalle de dieta guardado correctamente.")
                 return redirect('detalle_dieta', dieta_id=dieta_id)
-            else:
-                messages.error(request, "Error al guardar detalle de dieta.")
+            except ValueError as e:
+                # Captura el error lanzado desde el save() del modelo
+                form_detalle.add_error(None, str(e))
+                messages.error(request, f"Error al guardar: {e}")
+        else:
+            messages.error(request, "Formulario inválido. Revisa los campos.")
+    else:
+        form_detalle = DetalleDietaForm()
 
     return render(request, 'accounts/detalle_dieta.html', {
         'form_detalle': form_detalle,
@@ -404,10 +429,17 @@ def detalle_dieta(request, dieta_id):
         'detalles': detalles
     })
 
+
 @login_required
 def editar_detalle_dieta(request, detalle_id):
     detalle = get_object_or_404(DetalleDieta, id=detalle_id)
     form_detalle = DetalleDietaForm(instance=detalle)
+
+    context = {
+        'form_detalle': form_detalle,
+        'detalle': detalle,
+        'fecha_actual': date.today(), # Pasa la fecha actual al contexto
+    }
 
     if request.method == 'POST':
         if 'editar_detalle' in request.POST:
